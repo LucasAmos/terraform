@@ -23,19 +23,19 @@ resource "github_repository" "repo" {
 }
 
 
-resource "github_branch" "master" {
+resource "github_branch" "default" {
   repository = github_repository.repo.name
   branch     = local.default_branch
 }
 
 resource "github_branch_default" "default" {
   repository = github_repository.repo.name
-  branch     = github_branch.master.branch
+  branch     = github_branch.default.branch
 }
 
-module "project-creator" {
+module "github-project" {
   count  = local.has_projects ? 1 : 0
-  source = "../project-creator"
+  source = "../github-project"
 
   repo_name = github_repository.repo.name
   projects  = var.config.projects
@@ -53,8 +53,14 @@ resource "github_repository_file" "pr_template" {
   commit_email   = "lucas@lucasamos.dev"
 
   depends_on = [
-    github_branch.master
+    github_branch.default
   ]
+
+  lifecycle {
+    ignore_changes = [
+      content
+    ]
+  }
 }
 
 output "repo_url" {
